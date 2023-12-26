@@ -9,4 +9,6 @@ public interface PaymentAccountService extends Crud<PaymentAccount> {
     boolean depositMoney(PaymentAccount paymentAccount, BigDecimal amount);
 
     boolean withdrawMoney(PaymentAccount paymentAccount, BigDecimal amount);
+
+    BigDecimal getTotalMoney(int id) throws Exception;
 }

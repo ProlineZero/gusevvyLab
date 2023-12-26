@@ -3,6 +3,8 @@ package ru.bstu.course.gusev.bank.service.impl;
 import ru.bstu.course.gusev.bank.entity.BankAtm;
 import ru.bstu.course.gusev.bank.entity.BankOffice;
 import ru.bstu.course.gusev.bank.entity.Employee;
+import ru.bstu.course.gusev.bank.service.AtmService;
+import ru.bstu.course.gusev.bank.service.EmployeeService;
 import ru.bstu.course.gusev.bank.validator.BankOfficeValidator;
 import ru.bstu.course.gusev.bank.service.BankOfficeService;
 import ru.bstu.course.gusev.bank.service.BankService;
@@ -19,7 +21,10 @@ public class BankOfficeServiceImpl implements BankOfficeService {
     private final Map<Integer, BankOffice> bankOffices = new HashMap<>();
     private final Map<Integer, List<Employee>> employeesByOfficeId = new HashMap<>();
     private final Map<Integer, List<BankAtm>> atmsByOfficeId = new HashMap<>();
+
     private final BankService bankService;
+    private EmployeeService employeeService;
+    private AtmService atmService;
 
     public BankOfficeServiceImpl(BankService bankService) {
         this.bankService = bankService;
@@ -55,6 +60,14 @@ public class BankOfficeServiceImpl implements BankOfficeService {
         bankService.addOffice(newOffice.getBank().getId(), newOffice);
 
         return newOffice;
+    }
+
+    public void setEmployeeService(EmployeeService employeeService) {
+        this.employeeService = employeeService;
+    }
+
+    public void setAtmService(AtmService atmService) {
+        this.atmService = atmService;
     }
 
     @Override
@@ -109,6 +122,10 @@ public class BankOfficeServiceImpl implements BankOfficeService {
         }
 
         return false;
+    }
+
+    private List<BankAtm> getAllOfficeAtms(int id) {
+        return atmsByOfficeId.get(id);
     }
 
     @Override
@@ -190,4 +207,49 @@ public class BankOfficeServiceImpl implements BankOfficeService {
     public boolean removeEmployee(BankOffice bankOffice, Employee employee) {
         return bankOffice != null && employee != null;
     }
+
+    @Override
+    public boolean isSuitableBankOffice(BankOffice bankOffice, BigDecimal money) throws Exception {
+        if (bankOffice.isWorking() && bankOffice.isCashWithdrawalAvailable()
+            && bankOffice.getTotalMoney().compareTo(money) >= 0) {
+            List<BankAtm> bankAtmSuitable = getSuitableBankAtmInOffice(bankOffice, money);
+            if (bankAtmSuitable.isEmpty()) {
+                return false;
+            }
+
+            List<Employee> employeesSuitable = getSuitableEmployeeInOffice(bankOffice);
+            if (employeesSuitable.isEmpty()) {
+                return false;
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public List<BankAtm> getSuitableBankAtmInOffice(BankOffice bankOffice, BigDecimal money) {
+        List<BankAtm> bankAtmByOffice = getAllOfficeAtms(bankOffice.getId());
+        List<BankAtm> suitableBankAtm = new ArrayList<>();
+
+        for (BankAtm bankAtm : bankAtmByOffice) {
+            if (atmService.isAtmSuitable(bankAtm, money)) {
+                suitableBankAtm.add(bankAtm);
+            }
+        }
+
+        return suitableBankAtm;    }
+
+    @Override
+    public List<Employee> getSuitableEmployeeInOffice(BankOffice bankOffice) throws Exception {
+        List<Employee> employees = getAllEmployeesByOfficeId(bankOffice.getId());
+        List<Employee> suitableEmployee = new ArrayList<>();
+
+        for (Employee employee : employees) {
+            if (employeeService.isEmployeeSuitable(employee)) {
+                suitableEmployee.add(employee);
+            }
+        }
+
+        return suitableEmployee;    }
 }

@@ -15,7 +15,6 @@ public class BankAtm {
     private BankAtmStatus status;
     private Bank bank;
     private BankOffice bankOffice;
-    private Employee employee;
     private boolean isCashWithdrawalAvailable;
     private boolean isCashDepositAvailable;
     private BigDecimal totalMoney;
@@ -33,7 +32,6 @@ public class BankAtm {
         this.status = bankAtm.status;
         this.bank = new Bank(bankAtm.bank);
         this.bankOffice = new BankOffice(bankAtm.bankOffice);
-        this.employee = new Employee(bankAtm.employee);
         this.isCashWithdrawalAvailable = bankAtm.isCashWithdrawalAvailable;
         this.isCashDepositAvailable = bankAtm.isCashDepositAvailable;
         this.totalMoney = bankAtm.totalMoney;
@@ -49,7 +47,6 @@ public class BankAtm {
         this.status = BankAtmStatus.NOT_WORKING;
         this.bank = null;
         this.bankOffice = null;
-        this.employee = null;
         this.isCashWithdrawalAvailable = false;
         this.isCashDepositAvailable = false;
         this.totalMoney = new BigDecimal("0");
@@ -63,7 +60,6 @@ public class BankAtm {
         this.status = BankAtmStatus.NOT_WORKING;
         this.bank = null;
         this.bankOffice = null;
-        this.employee = null;
         this.isCashWithdrawalAvailable = false;
         this.isCashDepositAvailable = false;
         this.totalMoney = new BigDecimal("0");
@@ -85,7 +81,6 @@ public class BankAtm {
         this.status = status;
         this.bank = bank;
         this.bankOffice = bankOffice;
-        this.employee = employee;
         this.isCashWithdrawalAvailable = isCashWithdrawalAvailable;
         this.isCashDepositAvailable = isCashDepositAvailable;
         this.totalMoney = totalMoney;
@@ -104,7 +99,6 @@ public class BankAtm {
         this.status = status;
         this.bank = bank;
         this.bankOffice = bankOffice;
-        this.employee = employee;
         this.isCashWithdrawalAvailable = isCashWithdrawalAvailable;
         this.isCashDepositAvailable = isCashDepositAvailable;
         this.totalMoney = totalMoney;
@@ -122,7 +116,6 @@ public class BankAtm {
                 status = '%s',
                 bank = '%s',
                 bankOffice = '%s',
-                employee = '%s',
                 isCashWithdrawalAvailable = '%s',
                 isCashDepositAvailable = '%s',
                 totalMoney = '%.2f',
@@ -130,7 +123,7 @@ public class BankAtm {
             """
             .formatted(
                 getId(), getName(), getAddress(), getStatus(), getBank().getName(), getBankOffice(),
-                getEmployee(), isCashWithdrawalAvailable(), isCashDepositAvailable(), getTotalMoney(),
+                isCashWithdrawalAvailable(), isCashDepositAvailable(), getTotalMoney(),
                 getMaintenanceCost()
             );
     }

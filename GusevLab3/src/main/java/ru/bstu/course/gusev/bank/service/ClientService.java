@@ -21,4 +21,5 @@ public interface ClientService extends Crud<Client> {
 
     void printClientData(int id, boolean withAccounts);
 
+    PaymentAccount getBestPaymentAccount(int id) throws Exception;
 }

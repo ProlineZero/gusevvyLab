@@ -13,21 +13,28 @@ import java.util.Scanner;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
         Random random = new Random();
         Scanner scanner = new Scanner(System.in);
 
         BankService bankService = new BankServiceImpl();
         ClientService clientService = new ClientServiceImpl(bankService);
+
         BankOfficeService bankOfficeService = new BankOfficeServiceImpl(bankService);
         bankService.setBankOfficeService(bankOfficeService);
         bankService.setClientService(clientService);
 
         bankService.setBankOfficeService(bankOfficeService);
+
         EmployeeService employeeService = new EmployeeServiceImpl(bankOfficeService);
+        bankOfficeService.setEmployeeService(employeeService);
+
         AtmService atmService = new AtmServiceImpl(bankOfficeService);
+        bankOfficeService.setAtmService(atmService);
+
         bankService.setClientService(clientService);
+
         PaymentAccountService paymentAccountService = new PaymentAccountServiceImpl(clientService);
         CreditAccountService creditAccountService = new CreditAccountServiceImpl(clientService);
 
@@ -51,19 +58,25 @@ public class Main {
             clients, bankService, random, bankOfficeService, clientService, creditAccountService
         );
 
-        handleUserAction(scanner, bankService, clientService);
+        handleUserAction(
+            scanner, bankService, clientService, bankOfficeService, paymentAccountService, creditAccountService
+        );
 
         scanner.close();
     }
 
-    private static void handleUserAction(Scanner scanner, BankService bankService, ClientService clientService) {
+    private static void handleUserAction(
+        Scanner scanner, BankService bankService, ClientService clientService, BankOfficeService bankOfficeService,
+        PaymentAccountService paymentAccountService, CreditAccountService creditAccountService
+    ) throws Exception {
 
         while (true) {
 
             System.out.println("\nPick an action: ");
             System.out.println("1 - check bank data by bank id");
             System.out.println("2 - check client data by client id");
-            System.out.println("3 - quit program");
+            System.out.println("3 - take credit");
+            System.out.println("4 - quit program");
 
             String action = scanner.nextLine();
 
@@ -78,6 +91,10 @@ public class Main {
                     break;
 
                 case "3":
+                    handleTakeCredit(scanner, bankService, clientService, bankOfficeService, paymentAccountService, creditAccountService);
+                    break;
+
+                case "4":
                     return;
 
                 default:
@@ -85,6 +102,98 @@ public class Main {
                     break;
             }
         }
+    }
+
+    private static void handleTakeCredit(
+        final Scanner scanner, final BankService bankService, final ClientService clientService,
+        final BankOfficeService bankOfficeService, final PaymentAccountService paymentAccountService,
+        final CreditAccountService creditAccountService
+    ) throws Exception {
+
+        System.out.println("What client should take the credit?");
+
+        for (Client client : clientService.fetchAll()) {
+            System.out.println("id: " + client.getId() + " - " + client.getName());
+        }
+
+        System.out.println("Enter client id:");
+
+        int clientId = scanner.nextInt();
+        scanner.nextLine();
+
+        System.out.println("Enter total credit amount");
+        BigDecimal amount = new BigDecimal(scanner.nextLine());
+
+        System.out.println("Enter duration in months:");
+        int months = scanner.nextInt();
+
+        scanner.nextLine();
+
+        List<Bank> suitableBanks = bankService.getBanksSuitable(amount, months);
+
+        printSuitbalBanks(suitableBanks);
+
+        int bankId = inputBankId(scanner);
+
+        Bank bank = bankService.findById(bankId);
+
+        BankOffice bankOffice = bankService.getBankOfficeSuitableInBank(bank, amount).get(0);
+        Employee employee = bankOfficeService.getSuitableEmployeeInOffice(bankOffice).get(0);
+
+        PaymentAccount paymentAccount = getPaymentAccount(clientService, paymentAccountService, clientId);
+
+        CreditAccount creditAccount = creditAccountService.create(
+            new CreditAccount(
+                clientService.findById(clientId), bank, LocalDate.now(),
+                months, amount, new BigDecimal("0"), new BigDecimal("0"),
+                employee, paymentAccount
+            )
+        );
+
+        if (bankService.approveCredit(bank, creditAccount, employee)) {
+
+            System.out.println("Credit was approved");
+            System.out.println("id: " + creditAccount.getId());
+
+        } else {
+            System.out.println("Credit was not approved");
+        }
+    }
+
+    private static void printSuitbalBanks(final List<Bank> suitableBanks) {
+
+        System.out.println("List of suitable banks:");
+
+        for (Bank bank : suitableBanks) {
+            System.out.println("id: " + bank.getId() + " - " + bank.getName());
+        }
+    }
+
+    private static int inputBankId(final Scanner scanner) {
+
+        System.out.println("Enter bank id:");
+
+        int bankId = scanner.nextInt();
+        scanner.nextLine();
+
+        return bankId;
+    }
+
+    private static PaymentAccount getPaymentAccount(final ClientService clientService, final PaymentAccountService paymentAccountService, final int clientId) {
+        PaymentAccount paymentAccount;
+        try {
+            paymentAccount = clientService.getBestPaymentAccount(clientId);
+        } catch (Exception e) {
+
+            paymentAccount = paymentAccountService.create(
+                new PaymentAccount(
+                    clientService.findById(clientId),
+                    clientService.findById(clientId).getBank(),
+                    new BigDecimal("0")
+                )
+            );
+        }
+        return paymentAccount;
     }
 
     private static void createBanks(BankService bankService) {
@@ -134,7 +243,7 @@ public class Main {
                     new BankAtm(
                         "Atm " + i, office.getAddress(), BankAtmStatus.WORKING, office.getBank(), office,
                         bankOfficeService.getAllEmployeesByOfficeId(office.getId()).get(random.nextInt(bankOfficeService.getAllEmployeesByOfficeId(office.getId()).size())),
-                        true, true, new BigDecimal("0"), BigDecimal.valueOf(random.nextDouble() * 25)
+                        true, true, office.getTotalMoney(), BigDecimal.valueOf(random.nextDouble() * 25)
                     )
                 );
             }
@@ -217,10 +326,7 @@ public class Main {
             System.out.println("id: " + bank.getId() + " - " + bank.getName());
         }
 
-        System.out.println("Enter bank id:");
-
-        int bankIdToPrint = scanner.nextInt();
-        scanner.nextLine();
+        int bankIdToPrint = inputBankId(scanner);
         bankService.printData(bankIdToPrint);
     }
 }

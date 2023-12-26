@@ -29,7 +29,8 @@ public class EmployeeServiceImpl implements EmployeeService {
             System.err.println("Employee with id " + id + " is not found");
         }
 
-        return employee;    }
+        return employee;
+    }
 
     @Override
     public List<Employee> fetchAll() {
@@ -62,5 +63,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public boolean transferEmployee(Employee employee, BankOffice bankOffice) {
         return false;
+    }
+
+    @Override
+    public boolean isEmployeeSuitable(Employee employee) {
+        return employee.isCreditAvailable();
     }
 }

@@ -80,4 +80,10 @@ public class PaymentAccountServiceImpl implements PaymentAccountService {
         return true;
     }
 
+    @Override
+    public BigDecimal getTotalMoney(int id) throws Exception {
+        PaymentAccount paymentAccount = findById(id);
+        return paymentAccount.getBalance();
+    }
+
 }

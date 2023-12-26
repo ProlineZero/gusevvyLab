@@ -25,4 +25,13 @@ public interface BankOfficeService extends Crud<BankOffice> {
 
     boolean removeEmployee(BankOffice bankOffice, Employee employee);
 
+    boolean isSuitableBankOffice(BankOffice bankOffice, BigDecimal money) throws Exception;
+
+    List<BankAtm> getSuitableBankAtmInOffice(BankOffice bankOffice, BigDecimal money);
+
+    List<Employee> getSuitableEmployeeInOffice(BankOffice bankOffice) throws Exception;
+
+    void setEmployeeService(EmployeeService employeeService);
+
+    void setAtmService(AtmService atmService);
 }
